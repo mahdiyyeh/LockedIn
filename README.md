@@ -42,6 +42,21 @@
 
 ## Setup
 
+### Quick start (one-liners)
+
+```bash
+make setup          # install backend + frontend deps (creates backend venv)
+make dev            # runs backend on :8000 and frontend on :5173
+```
+
+Custom ports/env:
+
+```bash
+UVICORN_PORT=9000 VITE_PORT=5174 OPENAI_API_KEY=sk-xxx make dev
+```
+
+### Manual steps
+
 Prereqs: Python 3.10+, Node.js 18+, OpenAI API key (or equivalent)
 
 1. Clone
