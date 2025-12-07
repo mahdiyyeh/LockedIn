@@ -1,4 +1,4 @@
-# CommitCast
+#  , CommitCast
 
 **CommitCast** is a social accountability + prediction app where users create commitments (tasks with deadlines), get AI-powered success predictions, and let others bet virtual points on their outcomes.
 
