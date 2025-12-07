@@ -1,174 +1,178 @@
-#  , CommitCast
+# Locked In
 
-**CommitCast** is a social accountability + prediction app where users create commitments (tasks with deadlines), get AI-powered success predictions, and let others bet virtual points on their outcomes.
+**Locked In** (formerly "CommitCast") is a social accountability + prediction app where users create commitments (tasks with deadlines), get AI-powered success predictions, and let others bet virtual points on outcomes.
 
 ## Features
 
-- 🎯 **Create Commitments** - Set goals with deadlines and descriptions
-- 🤖 **AI Predictions** - OpenAI-powered analysis that asks follow-up questions and predicts success probability
-- 💰 **Social Betting** - Friends can bet virtual points on whether you'll complete your commitment
-- 📊 **Track Progress** - Dashboard with your commitments grouped by status
-- 🏆 **Coaching Messages** - AI provides reflection and coaching after you mark outcomes
-- 🌍 **Public Commitments** - Share your goals publicly and get community support
+- 🎯 Create commitments with deadline and description
+- 🤖 AI follow-up questions and success predictions
+- 💰 Social betting with virtual points
+- 📊 Dashboard grouped by status (active, completed, failed)
+- 🏆 AI coaching/reflection after outcome resolution
+- 🌍 Public commitments and community comments
 
 ## Tech Stack
 
 ### Backend
-- **FastAPI** - Python async web framework
-- **SQLAlchemy** - SQL ORM with SQLite database
-- **OpenAI API** - AI predictions and coaching (designed for future Spoon-style agent swapping)
-- **JWT Authentication** - Secure token-based auth with bcrypt password hashing
+
+- FastAPI (async web framework) — source: lockedin-backend/app/main.py
+- SQLAlchemy + SQLite — models: lockedin-backend/app/models.py
+- AI layer: lockedin-backend/app/ai_client.py (wraps OpenAI/Spoon-like providers)
+- JWT auth + bcrypt password hashing — implemented in lockedin-backend/app/main.py
+- Requirements: lockedin-backend/requirements.txt
 
 ### Frontend
-- **React 19** + **TypeScript**
-- **Vite** - Fast build tool
-- **Tailwind CSS** - Utility-first styling
-- **React Router** - Client-side routing
-- **Radix UI** - Accessible UI primitives
 
-## Setup Instructions
+- React 19 + TypeScript — source: lockedin-frontend/src
+- Vite — lockedin-frontend/vite.config.ts
+- Tailwind CSS — lockedin-frontend/tailwind.config.js
+- React Router, Radix UI components
+- API client: lockedin-frontend/src/api.ts
+- Types: lockedin-frontend/src/types.ts
+- Package config: lockedin-frontend/package.json
 
-### Prerequisites
+## Important files (quick)
 
-- Python 3.10+
-- Node.js 18+
-- OpenAI API key
+- lockedin-backend/app/main.py — backend routes, DB setup, auth
+- lockedin-backend/app/models.py — SQLAlchemy models
+- lockedin-backend/app/ai_client.py — generate questions, predict outcome, coaching
+- lockedin-backend/.env (template) — env vars (DO NOT COMMIT SECRETS)
+- lockedin-frontend/src/api.ts — frontend API helpers and base URL
+- lockedin-frontend/src/pages & components — UI
 
-### 1. Clone the repository
+## Setup
+
+Prereqs: Python 3.10+, Node.js 18+, OpenAI API key (or equivalent)
+
+1. Clone
 
 ```bash
-git clone <your-repo-url>
-cd CommitCast
+git clone <repo-url>
+cd LockedIn
 ```
 
-### 2. Backend Setup
+2. Backend
 
 ```bash
-cd commitcast-backend
-
-# Create a virtual environment
+cd lockedin-backend
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
+source venv/bin/activate   # macOS / Linux
 pip install -r requirements.txt
+```
 
-# Set environment variables
+Create `.env` in lockedin-backend with at least:
+
+```
+OPENAI_API_KEY=sk-...
+SECRET_KEY=your-secret-key  # optional for dev
+DEFAULT_LLM_PROVIDER=openai  # optional
+DEFAULT_MODEL=gpt-4o        # optional
+```
+
+Run:
+
+```bash
 export OPENAI_API_KEY="your-openai-api-key"
-# Optional: export SECRET_KEY="your-secret-key"  # For JWT tokens
-
-# Run the backend
 uvicorn app.main:app --reload
 ```
 
-The backend will be available at `http://127.0.0.1:8000`
+Default backend: http://127.0.0.1:8000 — API docs at /docs
 
-**API Documentation**: Visit `http://127.0.0.1:8000/docs` for the interactive Swagger UI.
+Notes: the backend currently creates a local SQLite DB file (commitcast.db by default in config). Rename in code if you prefer lockedin.db.
 
-### 3. Frontend Setup
+3. Frontend
 
 ```bash
-cd commitcast-frontend
-
-# Install dependencies
+cd lockedin-frontend
 npm install
-
-# Run the frontend
 npm run dev
 ```
 
-The frontend will be available at `http://localhost:5173`
+Default frontend: http://localhost:5173
 
-### 4. Environment Variables
+4. Running both
+   Terminal 1:
 
-#### Backend (`commitcast-backend/`)
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `OPENAI_API_KEY` | Your OpenAI API key | Yes |
-| `SECRET_KEY` | JWT signing secret (defaults to dev key) | No |
-
-You can create a `.env` file in the backend directory:
-
-```env
-OPENAI_API_KEY=sk-...
-SECRET_KEY=your-production-secret-key
-```
-
-## Running Both Apps Together
-
-**Terminal 1 - Backend:**
 ```bash
-cd commitcast-backend
+cd lockedin-backend
 source venv/bin/activate
 export OPENAI_API_KEY="your-key"
 uvicorn app.main:app --reload
 ```
 
-**Terminal 2 - Frontend:**
+Terminal 2:
+
 ```bash
-cd commitcast-frontend
+cd lockedin-frontend
 npm run dev
 ```
 
-Then open `http://localhost:5173` in your browser.
+## API Endpoints (implemented in lockedin-backend/app/main.py)
 
-## API Endpoints
+Auth
 
-### Auth
-- `POST /auth/register` - Create a new account
-- `POST /auth/login` - Login and get JWT token
-- `GET /auth/me` - Get current user info
+- POST /auth/register
+- POST /auth/login
+- GET /auth/me
 
-### Commitments
-- `POST /commitments` - Create a new commitment
-- `GET /commitments/my` - List your commitments
-- `GET /commitments/public` - List public commitments
-- `GET /commitments/{id}` - Get commitment details
-- `POST /commitments/{id}/complete` - Mark commitment as completed/failed
+Commitments
 
-### AI
-- `POST /commitments/{id}/ai/questions` - Generate AI follow-up questions
-- `POST /commitments/{id}/ai/answer` - Submit answer to AI question
-- `POST /commitments/{id}/ai/predict` - Get AI success prediction
+- POST /commitments
+- GET /commitments/my
+- GET /commitments/public
+- GET /commitments/{id}
+- POST /commitments/{id}/complete
 
-### Bets
-- `GET /commitments/{id}/bets` - List bets on a commitment
-- `POST /commitments/{id}/bets` - Place a bet
+AI
 
-### User
-- `GET /me/balance` - Get your point balance
-- `GET /me/stats` - Get your stats (completed, failed, success rate)
+- POST /commitments/{id}/ai/questions -> generate follow-up questions (app.ai_client.generate_questions_for_commitment)
+- POST /commitments/{id}/ai/answer -> submit AI answer
+- POST /commitments/{id}/ai/predict -> get success prediction (app.ai_client.predict_commitment_outcome)
 
-## AI Architecture
+Bets & Comments
 
-The AI functionality is abstracted in `app/ai_client.py` with three main functions:
+- GET /commitments/{id}/bets
+- POST /commitments/{id}/bets
+- GET /commitments/{id}/comments
+- POST /commitments/{id}/comments
 
-1. **`generate_questions_for_commitment()`** - Asks 3-5 follow-up questions about the commitment
-2. **`predict_commitment_outcome()`** - Returns probability, explanation, and confidence level
-3. **`coaching_reflection()`** - Provides supportive coaching message after resolution
+User
 
-This abstraction layer is designed to be easily swapped for a SpoonOS/Spoon AI agent system in the future.
+- GET /me/balance
+- GET /me/stats
 
-## Development
+## AI architecture
 
-### Build for Production
+- ai_client.py exposes:
+  - generate_questions_for_commitment(commitment) — returns 3–5 follow-ups
+  - predict_commitment_outcome(commitment, answers) — probability, explanation, confidence
+  - coaching_reflection(commitment, outcome) — supportive reflection message
+- Designed to be swappable for Spoon/SpoonOS or other LLM providers (spoon-ai-sdk may be present in requirements)
 
-**Backend:**
+## Development / Production
+
+Backend production:
+
 ```bash
-cd commitcast-backend
+cd lockedin-backend
 pip install -r requirements.txt
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-**Frontend:**
+Frontend build:
+
 ```bash
-cd commitcast-frontend
+cd lockedin-frontend
 npm run build
-npm run preview  # To test the production build
+npm run preview
 ```
+
+## Notes & TODOs
+
+- Update DB filename/reference if you want lockedin.db instead of commitcast.db (configured in lockedin-backend/app/main.py).
+- Keep backend Pydantic models and frontend types in sync (lockedin-backend/app/main.py vs lockedin-frontend/src/types.ts).
+- Ensure .env not committed.
 
 ## License
 
 MIT
-
