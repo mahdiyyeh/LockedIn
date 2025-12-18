@@ -1,6 +1,6 @@
 # Locked In
 
-**Locked In** (formerly "CommitCast") is a social accountability + prediction app where users create commitments (tasks with deadlines), get AI-powered success predictions, and let others bet virtual points on outcomes.
+**Locked In** is a social accountability + prediction app where users create commitments (tasks with deadlines), get AI-powered success predictions, and let others bet virtual points on outcomes.
 
 ## Features
 
@@ -181,12 +181,6 @@ cd lockedin-frontend
 npm run build
 npm run preview
 ```
-
-## Notes & TODOs
-
-- Update DB filename/reference if you want lockedin.db instead of commitcast.db (configured in lockedin-backend/app/main.py).
-- Keep backend Pydantic models and frontend types in sync (lockedin-backend/app/main.py vs lockedin-frontend/src/types.ts).
-- Ensure .env not committed.
 
 ## License
 

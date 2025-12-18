@@ -12,19 +12,19 @@ setup: install-backend install-frontend ## Install backend + frontend deps
 
 install-backend: ## Create venv (if missing) and install backend deps
 	test -d $(VENV) || $(PYTHON) -m venv $(VENV)
-	cd $(BACKEND_DIR) && $(VENV)/bin/pip install -r requirements.txt
+	$(VENV)/bin/pip install -r $(BACKEND_DIR)/requirements.txt
 
 install-frontend: ## Install frontend deps
 	cd $(FRONTEND_DIR) && npm install
 
 backend: ## Run FastAPI backend (reload on change)
-	cd $(BACKEND_DIR) && OPENAI_API_KEY=$(OPENAI_API_KEY) $(VENV)/bin/python -m uvicorn app.main:app --reload --host 0.0.0.0 --port $(UVICORN_PORT)
+	OPENAI_API_KEY=$(OPENAI_API_KEY) $(VENV)/bin/python -m uvicorn app.main:app --app-dir $(BACKEND_DIR) --reload --host 0.0.0.0 --port $(UVICORN_PORT)
 
 frontend: ## Run Vite frontend
 	cd $(FRONTEND_DIR) && npm run dev -- --host --port $(VITE_PORT)
 
 dev: ## Run backend + frontend together (press Ctrl+C to stop both)
-	cd $(BACKEND_DIR) && OPENAI_API_KEY=$(OPENAI_API_KEY) $(VENV)/bin/python -m uvicorn app.main:app --reload --host 0.0.0.0 --port $(UVICORN_PORT) &
+	OPENAI_API_KEY=$(OPENAI_API_KEY) $(VENV)/bin/python -m uvicorn app.main:app --app-dir $(BACKEND_DIR) --reload --host 0.0.0.0 --port $(UVICORN_PORT) &
 	cd $(FRONTEND_DIR) && npm run dev -- --host --port $(VITE_PORT) &
 	wait
 

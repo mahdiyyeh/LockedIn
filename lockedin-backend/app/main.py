@@ -100,10 +100,10 @@ def get_db():
 
 app = FastAPI(title="CommitCast API", version="1.0.0")
 
-# Allow frontend to call this API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, restrict this
+    # Allow all origins (dev convenience; tighten for prod)
+    allow_origin_regex=".*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
