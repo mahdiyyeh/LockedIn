@@ -4,7 +4,9 @@ FRONTEND_DIR := lockedin-frontend
 VENV := $(BACKEND_DIR)/venv
 UVICORN_PORT ?= 8000
 VITE_PORT ?= 5173
-OPENAI_API_KEY ?= dummy
+# Set OPENAI_API_KEY environment variable before running
+# Example: OPENAI_API_KEY=sk-... make backend
+OPENAI_API_KEY ?=
 
 .PHONY: setup install-backend install-frontend backend frontend dev clean-venv
 

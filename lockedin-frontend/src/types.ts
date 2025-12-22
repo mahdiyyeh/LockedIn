@@ -73,6 +73,12 @@ export interface PredictionResult {
   probability: number;
   explanation: string;
   confidence_label: string;
+  rate_limited?: boolean;
+}
+
+export interface QuestionsResponse {
+  questions: string[];
+  rate_limited: boolean;
 }
 
 export interface Bet {

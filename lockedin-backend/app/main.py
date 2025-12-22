@@ -9,7 +9,9 @@ from datetime import datetime, timedelta
 import os
 import uuid
 from typing import List, Optional
+from pathlib import Path
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -19,6 +21,13 @@ from jose import JWTError, jwt
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
+
+# Load environment variables from .env file
+# Look for .env in the backend directory (parent of app/)
+env_path = Path(__file__).parent.parent / ".env"
+if env_path.exists():
+    load_dotenv(env_path, override=True)
+    print(f"[main] Loaded .env file from: {env_path}")
 
 from .models import (
     Base, User, Commitment, Bet, UserBalance,
@@ -224,6 +233,7 @@ class PredictionResult(BaseModel):
     probability: float
     explanation: str
     confidence_label: str
+    rate_limited: bool = False
 
 
 class CoachingMessageOut(BaseModel):
@@ -645,7 +655,7 @@ def delete_commitment(
 # AI endpoints
 # -----------------------
 
-@app.post("/commitments/{commitment_id}/ai/questions", response_model=List[str])
+@app.post("/commitments/{commitment_id}/ai/questions")
 async def generate_ai_questions(
     commitment_id: int,
     db: Session = Depends(get_db),
@@ -664,7 +674,7 @@ async def generate_ai_questions(
     days_until_deadline = max(0, (commitment.deadline - datetime.utcnow()).days)
     
     # Generate questions
-    questions = await generate_questions_for_commitment(
+    questions, rate_limited = await generate_questions_for_commitment(
         commitment_title=commitment.title,
         commitment_description=commitment.description or "",
         commitment_category=commitment.category,
@@ -684,7 +694,11 @@ async def generate_ai_questions(
     
     db.commit()
     
-    return questions
+    # Return questions with rate limit info
+    return {
+        "questions": questions,
+        "rate_limited": rate_limited
+    }
 
 
 @app.post("/commitments/{commitment_id}/ai/answer")
@@ -743,7 +757,7 @@ async def predict_commitment(
     days_until_deadline = max(0, (commitment.deadline - datetime.utcnow()).days)
     
     # Get prediction
-    result = await predict_commitment_outcome(
+    result, rate_limited = await predict_commitment_outcome(
         commitment_title=commitment.title,
         commitment_description=commitment.description or "",
         commitment_category=commitment.category,
@@ -764,7 +778,8 @@ async def predict_commitment(
     return PredictionResult(
         probability=result["probability"],
         explanation=result["explanation"],
-        confidence_label=result["confidence_label"]
+        confidence_label=result["confidence_label"],
+        rate_limited=rate_limited
     )
 
 

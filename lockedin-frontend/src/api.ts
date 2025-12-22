@@ -129,8 +129,8 @@ export async function deleteCommitment(
 
 /* ========== AI ========== */
 
-export async function generateAIQuestions(commitmentId: number): Promise<string[]> {
-  return apiRequest<string[]>(`/commitments/${commitmentId}/ai/questions`, {
+export async function generateAIQuestions(commitmentId: number): Promise<{ questions: string[]; rate_limited: boolean }> {
+  return apiRequest<{ questions: string[]; rate_limited: boolean }>(`/commitments/${commitmentId}/ai/questions`, {
     method: "POST",
   });
 }

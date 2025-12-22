@@ -1,5 +1,5 @@
 // src/pages/CreateCommitmentPage.tsx
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -70,6 +70,11 @@ export default function CreateCommitmentPage({
   const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [submittingAnswer, setSubmittingAnswer] = useState(false);
   const [loadingPrediction, setLoadingPrediction] = useState(false);
+  
+  // Refs to track if AI operations are in progress (prevents double-clicks)
+  const aiRequestInProgress = useRef(false);
+  const lastAICallTime = useRef<number>(0);
+  const MIN_TIME_BETWEEN_AI_CALLS = 2000; // 2 seconds minimum between AI calls
 
   const handleCreateCommitment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,18 +98,35 @@ export default function CreateCommitmentPage({
       setCommitmentId(commitment.id);
       toast.success("Goal created!");
 
-      // Generate AI questions
+      // Generate AI questions (with debouncing)
+      const now = Date.now();
+      if (aiRequestInProgress.current || (now - lastAICallTime.current < MIN_TIME_BETWEEN_AI_CALLS)) {
+        const waitTime = Math.ceil((MIN_TIME_BETWEEN_AI_CALLS - (now - lastAICallTime.current)) / 1000);
+        toast.info(`Please wait ${waitTime} second${waitTime > 1 ? 's' : ''} before requesting AI features again.`);
+        return;
+      }
+      
+      aiRequestInProgress.current = true;
+      lastAICallTime.current = now;
       setLoadingQuestions(true);
       try {
-        const aiQuestions = await generateAIQuestions(commitment.id);
-        setQuestions(aiQuestions);
+        const response = await generateAIQuestions(commitment.id);
+        setQuestions(response.questions);
         setStep("questions");
+        
+        if (response.rate_limited) {
+          toast.warning(
+            "⚠️ Rate limit reached. Using fallback questions. Please wait 1-2 minutes before requesting AI features again.",
+            { duration: 6000 }
+          );
+        }
       } catch (err) {
         console.error("Failed to generate questions:", err);
         toast.error("AI questions unavailable. You can still get a prediction.");
         setStep("questions");
       } finally {
         setLoadingQuestions(false);
+        aiRequestInProgress.current = false;
       }
     } catch (err: unknown) {
       console.error("Create error:", err);
@@ -137,17 +159,36 @@ export default function CreateCommitmentPage({
   const handleGetPrediction = async () => {
     if (!commitmentId) return;
 
+    // Debounce: Prevent rapid successive calls
+    const now = Date.now();
+    if (aiRequestInProgress.current || (now - lastAICallTime.current < MIN_TIME_BETWEEN_AI_CALLS)) {
+      const waitTime = Math.ceil((MIN_TIME_BETWEEN_AI_CALLS - (now - lastAICallTime.current)) / 1000);
+      toast.info(`Please wait ${waitTime} second${waitTime > 1 ? 's' : ''} before requesting AI features again.`);
+      return;
+    }
+
+    aiRequestInProgress.current = true;
+    lastAICallTime.current = now;
     try {
       setLoadingPrediction(true);
       const result = await getAIPrediction(commitmentId);
       setPrediction(result);
       setStep("prediction");
-      toast.success("AI prediction generated!");
+      
+      if (result.rate_limited) {
+        toast.warning(
+          "⚠️ Rate limit reached. Using fallback prediction. Please wait 1-2 minutes before requesting AI features again.",
+          { duration: 6000 }
+        );
+      } else {
+        toast.success("AI prediction generated!");
+      }
     } catch (err) {
       console.error("Failed to get prediction:", err);
       toast.error("Failed to generate prediction");
     } finally {
       setLoadingPrediction(false);
+      aiRequestInProgress.current = false;
     }
   };
 
@@ -292,7 +333,7 @@ export default function CreateCommitmentPage({
                   <Button
                     type="submit"
                     className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                    disabled={creating || loadingQuestions}
+                    disabled={creating || loadingQuestions || aiRequestInProgress.current}
                   >
                     {creating || loadingQuestions ? (
                       <>
@@ -384,7 +425,7 @@ export default function CreateCommitmentPage({
                 <div className="pt-4 border-t border-primary/20">
                   <Button
                     onClick={handleGetPrediction}
-                    disabled={loadingPrediction}
+                    disabled={loadingPrediction || aiRequestInProgress.current}
                     className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     {loadingPrediction ? (
